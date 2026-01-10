@@ -48,40 +48,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const roomsCollection = client.db('stayvista').collection('rooms')
-
-    // Get all rooms
-    app.get('/rooms', async (req, res) => {
-      const category = req.query.category
-      console.log(category)
-      let query = {}
-      if (category && category !== 'null') query = { category }
-      const result = await roomsCollection.find(query).toArray()
-      res.send(result)
-    })
-
-    // Save a room data in db
-    app.post('/room', async (req, res) => {
-      const roomData = req.body
-      const result = await roomsCollection.insertOne(roomData)
-      res.send(result)
-    })
-
-    // get all rooms for host
-    app.get('/my-listings/:email', async (req, res) => {
-      const email = req.params.email
-
-      let query = { 'host.email': email }
-      const result = await roomsCollection.find(query).toArray()
-      res.send(result)
-    })
-
-    app.get('/room/:id', async (req, res) => {
-      const id = req.params.id
-      const query = { _id: new ObjectId(id) }
-      const result = await roomsCollection.findOne(query)
-      res.send(result)
-    })
-
+    const usersCollection = client.db('stayvista').collection('users')
 
     // auth related api
     app.post('/jwt', async (req, res) => {
@@ -112,6 +79,51 @@ async function run() {
         res.status(500).send(err)
       }
     })
+
+
+    // Get all rooms
+    app.get('/rooms', async (req, res) => {
+      const category = req.query.category
+      console.log(category)
+      let query = {}
+      if (category && category !== 'null') query = { category }
+      const result = await roomsCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    // Save a room data in db
+    app.post('/room', async (req, res) => {
+      const roomData = req.body
+      const result = await roomsCollection.insertOne(roomData)
+      res.send(result)
+    })
+
+    // get all rooms for host
+    app.get('/my-listings/:email', async (req, res) => {
+      const email = req.params.email
+
+      let query = { 'host.email': email }
+      const result = await roomsCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    // delete a room
+    app.delete('/room/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await roomsCollection.deleteOne(query)
+      res.send(result)
+    })
+
+    // Get a single room data from db using _id
+    app.get('/room/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await roomsCollection.findOne(query)
+      res.send(result)
+    })
+
+
 
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 })
