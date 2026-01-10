@@ -112,6 +112,14 @@ async function run() {
     })
 
 
+    // get all users data from db
+    app.get('/users', async (req, res) => {
+      const result = await usersCollection.find().toArray()
+      res.send(result)
+    })
+
+
+
     // Get all rooms
     app.get('/rooms', async (req, res) => {
       const category = req.query.category
