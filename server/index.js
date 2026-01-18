@@ -48,8 +48,10 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    const roomsCollection = client.db('stayvista').collection('rooms')
-    const usersCollection = client.db('stayvista').collection('users')
+    const db = client.db('stayvista')
+    const roomsCollection = db.collection('rooms')
+    const usersCollection = db.collection('users')
+    const bookingsCollection = db.collection('bookings')
 
     // verify admin middleware
     const verifyAdmin = async (req, res, next) => {
@@ -222,6 +224,38 @@ async function run() {
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
       const result = await roomsCollection.findOne(query)
+      res.send(result)
+    })
+
+    // Save a booking data in db
+    app.post('/booking', verifyToken, async (req, res) => {
+      const bookingData = req.body
+      // save room booking info
+      const result = await bookingsCollection.insertOne(bookingData)
+      // send email to guest
+      sendEmail(bookingData?.guest?.email, {
+        subject: 'Booking Successful!',
+        message: `You've successfully booked a room through StayVista. Transaction Id: ${bookingData.transactionId}`,
+      })
+      // send email to host
+      sendEmail(bookingData?.host?.email, {
+        subject: 'Your room got booked!',
+        message: `Get ready to welcome ${bookingData.guest.name}.`,
+      })
+
+      res.send(result)
+    })
+
+    // update Room Status
+    app.patch('/room/status/:id', async (req, res) => {
+      const id = req.params.id
+      const status = req.body.status
+      // change room availability status
+      const query = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: { booked: status },
+      }
+      const result = await roomsCollection.updateOne(query, updateDoc)
       res.send(result)
     })
 
