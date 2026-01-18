@@ -5,6 +5,7 @@ const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const jwt = require('jsonwebtoken')
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 const port = process.env.PORT || 8000
 
@@ -106,6 +107,24 @@ async function run() {
       }
     })
 
+    // create-payment-intent
+    app.post('/create-payment-intent', verifyToken, async (req, res) => {
+      const price = req.body.price
+      const priceInCent = parseFloat(price) * 100
+      if (!price || priceInCent < 1) return
+      // generate clientSecret
+      const { client_secret } = await stripe.paymentIntents.create({
+        amount: priceInCent,
+        currency: 'usd',
+        // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      })
+      // send client secret as response
+      res.send({ clientSecret: client_secret })
+    })
+
     // save a user data in db
     app.put('/user', async (req, res) => {
       const user = req.body
@@ -175,14 +194,14 @@ async function run() {
     })
 
     // Save a room data in db
-    app.post('/room', async (req, res) => {
+    app.post('/room', verifyToken, verifyHost, async (req, res) => {
       const roomData = req.body
       const result = await roomsCollection.insertOne(roomData)
       res.send(result)
     })
 
     // get all rooms for host
-    app.get('/my-listings/:email', async (req, res) => {
+    app.get('/my-listings/:email', verifyToken, verifyHost, async (req, res) => {
       const email = req.params.email
 
       let query = { 'host.email': email }
@@ -191,7 +210,7 @@ async function run() {
     })
 
     // delete a room
-    app.delete('/room/:id', async (req, res) => {
+    app.delete('/room/:id', verifyToken, verifyHost, async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
       const result = await roomsCollection.deleteOne(query)
