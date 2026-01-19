@@ -336,6 +336,54 @@ async function run() {
       })
     })
 
+    // Host Statistics
+    app.get('/host-stat', verifyToken, verifyHost, async (req, res) => {
+      const { email } = req.user
+      const bookingDetails = await bookingsCollection
+        .find(
+          { 'host.email': email },
+          {
+            projection: {
+              date: 1,
+              price: 1,
+            },
+          }
+        )
+        .toArray()
+
+      const totalRooms = await roomsCollection.countDocuments({
+        'host.email': email,
+      })
+      const totalPrice = bookingDetails.reduce(
+        (sum, booking) => sum + booking.price,
+        0
+      )
+      const { timestamp } = await usersCollection.findOne(
+        { email },
+        { projection: { timestamp: 1 } }
+      )
+
+      const chartData = bookingDetails.map(booking => {
+        const day = new Date(booking.date).getDate()
+        const month = new Date(booking.date).getMonth() + 1
+        const data = [`${day}/${month}`, booking?.price]
+        return data
+      })
+      chartData.unshift(['Day', 'Sales'])
+      // chartData.splice(0, 0, ['Day', 'Sales'])
+
+      console.log(chartData)
+
+      console.log(bookingDetails)
+      res.send({
+        totalRooms,
+        totalBookings: bookingDetails.length,
+        totalPrice,
+        chartData,
+        hostSince: timestamp,
+      })
+    })
+
     // Send a ping to confirm a successful connection
     await client.db('admin').command({ ping: 1 })
     console.log(
