@@ -29,7 +29,7 @@ const UpdateRoomModal = ({ setIsEditModalOpen, isOpen, room, refetch }) => {
         try {
             // upload image
             const image_url = await imageUpload(image)
-            console.log(image_url)
+            // console.log(image_url)
             setRoomData({ ...roomData, image: image_url })
             setLoading(false)
         } catch (err) {
@@ -53,13 +53,13 @@ const UpdateRoomModal = ({ setIsEditModalOpen, isOpen, room, refetch }) => {
         e.preventDefault()
         const updatedRoomData = Object.assign({}, roomData)
         delete updatedRoomData._id
-        console.log(updatedRoomData)
+            (updatedRoomData)
         try {
             const { data } = await axiosSecure.put(
                 `/room/update/${room?._id}`,
                 updatedRoomData
             )
-            console.log(data)
+            // console.log(data)
             refetch()
             setIsEditModalOpen(false)
             setLoading(false)

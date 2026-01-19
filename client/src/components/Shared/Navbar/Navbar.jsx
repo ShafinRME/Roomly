@@ -19,7 +19,7 @@ const Navbar = () => {
     setIsModalOpen(false)
   }
   const modalHandler = async () => {
-    console.log('I want to be a host')
+    // console.log('I want to be a host')
     try {
       const currentUser = {
         email: user?.email,
@@ -27,7 +27,7 @@ const Navbar = () => {
         status: 'Requested',
       }
       const { data } = await axiosSecure.put(`/user`, currentUser)
-      console.log(data)
+      // console.log(data)
       if (data.modifiedCount > 0) {
         toast.success('Success! Please wait for admin confirmation')
       } else {

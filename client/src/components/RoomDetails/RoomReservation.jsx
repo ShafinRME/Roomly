@@ -24,7 +24,7 @@ const RoomReservation = ({ room, refetch }) => {
   const totalPrice =
     parseInt(differenceInCalendarDays(new Date(room.to), new Date(room.from))) *
     room?.price
-  console.log(totalPrice)
+  // console.log(totalPrice)
   return (
     <div className='rounded-xl border-[1px] border-neutral-200 overflow-hidden bg-white'>
       <div className='flex items-center gap-1 p-4'>
@@ -38,7 +38,7 @@ const RoomReservation = ({ room, refetch }) => {
           showDateDisplay={false}
           rangeColors={['#F6536D']}
           onChange={item => {
-            console.log(item)
+            // console.log(item)
             setState([
               {
                 startDate: new Date(room.from),

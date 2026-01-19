@@ -20,7 +20,7 @@ const UserDataRow = ({ user, refetch }) => {
         },
         onSuccess: data => {
             refetch()
-            console.log(data)
+            // console.log(data)
             toast.success('User role updated successfully!')
             setIsOpen(false)
         },

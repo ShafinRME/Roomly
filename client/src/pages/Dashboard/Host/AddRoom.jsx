@@ -32,7 +32,7 @@ const AddRoom = () => {
             return data
         },
         onSuccess: () => {
-            console.log('Data Saved Successfully')
+            // console.log('Data Saved Successfully')
             toast.success('Room Added Successfully!')
             navigate('/dashboard/my-listings')
             setLoading(false)

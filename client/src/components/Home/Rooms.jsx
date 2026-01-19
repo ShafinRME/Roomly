@@ -12,7 +12,7 @@ const Rooms = () => {
   const [params, setParams] = useSearchParams()
   const category = params.get('category')
 
-  console.log(category)
+  // console.log(category)
   const { data: rooms = [], isLoading } = useQuery({
     queryKey: ['rooms', category],
     queryFn: async () => {

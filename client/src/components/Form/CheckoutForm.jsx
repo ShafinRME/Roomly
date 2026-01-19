@@ -28,7 +28,7 @@ const CheckoutForm = ({ closeModal, bookingInfo, refetch }) => {
     //   get clientSecret
     const getClientSecret = async price => {
         const { data } = await axiosSecure.post(`/create-payment-intent`, price)
-        console.log('clientSecret from server--->', data)
+        // console.log('clientSecret from server--->', data)
         setClientSecret(data.clientSecret)
     }
 
@@ -63,7 +63,7 @@ const CheckoutForm = ({ closeModal, bookingInfo, refetch }) => {
             setProcessing(false)
             return
         } else {
-            console.log('[PaymentMethod]', paymentMethod)
+            // console.log('[PaymentMethod]', paymentMethod)
             setCardError('')
         }
 
@@ -87,7 +87,7 @@ const CheckoutForm = ({ closeModal, bookingInfo, refetch }) => {
         }
 
         if (paymentIntent.status === 'succeeded') {
-            console.log(paymentIntent)
+            // console.log(paymentIntent)
             // 1. Create payment info object
             const paymentInfo = {
                 ...bookingInfo,
@@ -96,11 +96,11 @@ const CheckoutForm = ({ closeModal, bookingInfo, refetch }) => {
                 date: new Date(),
             }
             delete paymentInfo._id
-            console.log(paymentInfo)
+            // console.log(paymentInfo)
             try {
                 // 2. save payment info in booking collection (db)
                 const { data } = await axiosSecure.post('/booking', paymentInfo)
-                console.log(data)
+                // console.log(data)
 
                 // 3. change room status to booked in db
                 await axiosSecure.patch(`/room/status/${bookingInfo?._id}`, {

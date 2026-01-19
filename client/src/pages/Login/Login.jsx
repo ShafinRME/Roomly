@@ -43,7 +43,7 @@ const Login = () => {
       toast.error(err.message)
       setLoading(false)
     }
-    console.log(email)
+    // console.log(email)
   }
 
   // handle google signin

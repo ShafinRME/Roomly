@@ -29,7 +29,7 @@ const MyListings = () => {
             return data
         },
         onSuccess: data => {
-            console.log(data)
+            // console.log(data)
             refetch()
             toast.success('Successfully deleted.')
         },
@@ -37,7 +37,7 @@ const MyListings = () => {
 
     //  Handle Delete
     const handleDelete = async id => {
-        console.log(id)
+        // console.log(id)
         try {
             await mutateAsync(id)
         } catch (err) {

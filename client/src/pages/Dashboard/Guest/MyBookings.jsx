@@ -22,7 +22,7 @@ const MyBookings = () => {
         },
     })
 
-    console.log(bookings)
+    // console.log(bookings)
     if (isLoading) return <LoadingSpinner />
     return (
         <>

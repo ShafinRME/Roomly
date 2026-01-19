@@ -20,7 +20,7 @@ const BookingDataRow = ({ booking, refetch }) => {
             return data
         },
         onSuccess: async data => {
-            console.log(data)
+            // console.log(data)
             refetch()
             toast.success('Booking Canceled')
             //   Change Room booked status back to false
@@ -32,7 +32,7 @@ const BookingDataRow = ({ booking, refetch }) => {
 
     //  Handle Delete
     const handleDelete = async id => {
-        console.log(id)
+        // console.log(id)
         try {
             await mutateAsync(id)
         } catch (err) {
