@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 require('dotenv').config()
 const cors = require('cors')
+const nodemailer = require('nodemailer')
 const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const jwt = require('jsonwebtoken')
@@ -20,10 +21,49 @@ app.use(cors(corsOptions))
 app.use(express.json())
 app.use(cookieParser())
 
+
+// send email
+const sendEmail = (emailAddress, emailData) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // Use `true` for port 465, `false` for all other ports
+    auth: {
+      user: process.env.TRANSPORTER_EMAIL,
+      pass: process.env.TRANSPORTER_PASS,
+    },
+  })
+
+  // verify transporter
+  // verify connection configuration
+  transporter.verify(function (error, success) {
+    if (error) {
+      console.log(error)
+    } else {
+      console.log('Server is ready to take our messages')
+    }
+  })
+  const mailBody = {
+    from: `"StayVista" <${process.env.TRANSPORTER_EMAIL}>`, // sender address
+    to: emailAddress, // list of receivers
+    subject: emailData.subject, // Subject line
+    html: emailData.message, // html body
+  }
+
+  transporter.sendMail(mailBody, (error, info) => {
+    if (error) {
+      console.log(error)
+    } else {
+      console.log('Email Sent: ' + info.response)
+    }
+  })
+}
+
 // Verify Token Middleware
 const verifyToken = async (req, res, next) => {
   const token = req.cookies?.token
-  console.log(token)
+  // console.log(token)
   if (!token) {
     return res.status(401).send({ message: 'unauthorized access' })
   }
@@ -58,7 +98,7 @@ async function run() {
       const user = req.user
       const query = { email: user?.email }
       const result = await usersCollection.findOne(query)
-      console.log(result?.role)
+      // console.log(result?.role)
       if (!result || result?.role !== 'admin')
         return res.status(401).send({ message: 'unauthorized access!!' })
 
@@ -67,11 +107,10 @@ async function run() {
 
     // verify host middleware
     const verifyHost = async (req, res, next) => {
-      console.log('hello')
       const user = req.user
       const query = { email: user?.email }
       const result = await usersCollection.findOne(query)
-      console.log(result?.role)
+      // console.log(result?.role)
       if (!result || result?.role !== 'host') {
         return res.status(401).send({ message: 'unauthorized access!!' })
       }
@@ -130,6 +169,7 @@ async function run() {
     // save a user data in db
     app.put('/user', async (req, res) => {
       const user = req.body
+
       const query = { email: user?.email }
       // check if user already exists in db
       const isExist = await usersCollection.findOne(query)
@@ -155,6 +195,11 @@ async function run() {
         },
       }
       const result = await usersCollection.updateOne(query, updateDoc, options)
+      // welcome new user
+      sendEmail(user?.email, {
+        subject: 'Welcome to Stayvista!',
+        message: `Hope you will find your destination`,
+      })
       res.send(result)
     })
 
@@ -188,7 +233,7 @@ async function run() {
     // Get all rooms
     app.get('/rooms', async (req, res) => {
       const category = req.query.category
-      console.log(category)
+      // console.log(category)
       let query = {}
       if (category && category !== 'null') query = { category }
       const result = await roomsCollection.find(query).toArray()
@@ -336,9 +381,9 @@ async function run() {
       chartData.unshift(['Day', 'Sales'])
       // chartData.splice(0, 0, ['Day', 'Sales'])
 
-      console.log(chartData)
+      // console.log(chartData)
 
-      console.log(bookingDetails)
+      // console.log(bookingDetails)
       res.send({
         totalUsers,
         totalRooms,
@@ -384,9 +429,9 @@ async function run() {
       chartData.unshift(['Day', 'Sales'])
       // chartData.splice(0, 0, ['Day', 'Sales'])
 
-      console.log(chartData)
+      // console.log(chartData)
 
-      console.log(bookingDetails)
+      // console.log(bookingDetails)
       res.send({
         totalRooms,
         totalBookings: bookingDetails.length,
@@ -429,9 +474,9 @@ async function run() {
       chartData.unshift(['Day', 'Sales'])
       // chartData.splice(0, 0, ['Day', 'Sales'])
 
-      console.log(chartData)
+      // console.log(chartData)
 
-      console.log(bookingDetails)
+      // console.log(bookingDetails)
       res.send({
         totalBookings: bookingDetails.length,
         totalPrice,
@@ -456,5 +501,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`StayVista is running on port ${port}`)
+  (`StayVista is running on port ${port}`)
 })
