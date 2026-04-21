@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import useAuth from '../../../hooks/useAuth'
 import avatarImg from '../../../assets/images/placeholder.jpg'
+import logoImg from '../../../assets/images/logo.png'
 import HostModal from '../../Modal/HostRequestModal'
 import useAxiosSecure from '../../../hooks/useAxiosSecure'
 import toast from 'react-hot-toast'
@@ -50,12 +51,13 @@ const Navbar = () => {
             <Link to='/'>
               <img
                 // className='hidden md:block'
-                src='https://i.ibb.co/4ZXzmq5/logo.png'
+                src={logoImg}
                 alt='logo'
                 width='100'
                 height='100'
               />
             </Link>
+            {/* <SearchBar /> */}
             {/* Dropdown Menu */}
             <div className='relative'>
               <div className='flex flex-row items-center gap-3'>

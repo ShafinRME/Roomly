@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 import PropTypes from 'prop-types'
 import {
@@ -10,36 +11,55 @@ import {
 import { Fragment, useState } from 'react'
 import UpdateRoomForm from '../Form/UpdateRoomForm'
 import useAxiosSecure from '../../hooks/useAxiosSecure'
-import { imageUpload } from '../../api/utils'
+import { uploadMultipleImagesToCloudinary } from '../../api/utils'
 import toast from 'react-hot-toast'
 
 const UpdateRoomModal = ({ setIsEditModalOpen, isOpen, room, refetch }) => {
     const axiosSecure = useAxiosSecure()
     const [loading, setLoading] = useState(false)
     const [roomData, setRoomData] = useState(room)
+    const [selectedImages, setSelectedImages] = useState([])
+    const [imagePreviews, setImagePreviews] = useState([])
     const [dates, setDates] = useState({
         startDate: new Date(room?.from),
         endDate: new Date(room?.to),
         key: 'selection',
     })
 
-    //   handle Image update
-    const handleImage = async image => {
-        setLoading(true)
-        try {
-            // upload image
-            const image_url = await imageUpload(image)
-            // console.log(image_url)
-            setRoomData({ ...roomData, image: image_url })
-            setLoading(false)
-        } catch (err) {
-            console.log(err)
-            setLoading(false)
-            toast.error(err.message)
+    // Handle multiple images update
+    const handleImages = e => {
+        const files = Array.from(e.target.files)
+
+        // Limit to 5 images total
+        if (files.length + selectedImages.length > 5) {
+            toast.error('You can only upload up to 5 images')
+            return
         }
+
+        // Validate file types
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']
+        const invalidFiles = files.filter(file => !validTypes.includes(file.type))
+
+        if (invalidFiles.length > 0) {
+            toast.error('Please upload only JPG, PNG, WebP, or AVIF images')
+            return
+        }
+
+        // Add new files to existing ones
+        setSelectedImages(prev => [...prev, ...files])
+
+        // Create preview URLs
+        const newPreviews = files.map(file => URL.createObjectURL(file))
+        setImagePreviews(prev => [...prev, ...newPreviews])
     }
 
-    //Date range handler
+    // Remove image from selection
+    const removeImage = index => {
+        setSelectedImages(prev => prev.filter((_, i) => i !== index))
+        setImagePreviews(prev => prev.filter((_, i) => i !== index))
+    }
+
+    // Date range handler
     const handleDates = item => {
         setDates(item.selection)
         setRoomData({
@@ -48,22 +68,30 @@ const UpdateRoomModal = ({ setIsEditModalOpen, isOpen, room, refetch }) => {
             from: item.selection.startDate,
         })
     }
+
     const handleSubmit = async e => {
-        setLoading(true)
         e.preventDefault()
-        const updatedRoomData = Object.assign({}, roomData)
-        delete updatedRoomData._id
-            (updatedRoomData)
+        setLoading(true)
+
         try {
+            const updatedRoomData = { ...roomData }
+            delete updatedRoomData._id
+
+            // If new images are selected, upload them
+            if (selectedImages.length > 0) {
+                const imageUrls = await uploadMultipleImagesToCloudinary(selectedImages)
+                updatedRoomData.images = imageUrls
+            }
+
             const { data } = await axiosSecure.put(
                 `/room/update/${room?._id}`,
                 updatedRoomData
             )
-            // console.log(data)
+
             refetch()
             setIsEditModalOpen(false)
             setLoading(false)
-            toast.success('Home info updated')
+            toast.success('Room info updated successfully!')
         } catch (err) {
             console.log(err)
             setLoading(false)
@@ -116,7 +144,9 @@ const UpdateRoomModal = ({ setIsEditModalOpen, isOpen, room, refetch }) => {
                                         handleDates={handleDates}
                                         roomData={roomData}
                                         loading={loading}
-                                        handleImage={handleImage}
+                                        handleImages={handleImages}
+                                        imagePreviews={imagePreviews}
+                                        removeImage={removeImage}
                                         setRoomData={setRoomData}
                                     />
                                 </div>
@@ -142,6 +172,8 @@ const UpdateRoomModal = ({ setIsEditModalOpen, isOpen, room, refetch }) => {
 UpdateRoomModal.propTypes = {
     setIsEditModalOpen: PropTypes.func,
     isOpen: PropTypes.bool,
+    room: PropTypes.object,
+    refetch: PropTypes.func,
 }
 
 export default UpdateRoomModal

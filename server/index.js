@@ -7,12 +7,13 @@ const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const jwt = require('jsonwebtoken')
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+const { differenceInCalendarDays } = require('date-fns')
 
 const port = process.env.PORT || 8000
 
 // middleware
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://stay-vista-c059e.web.app'],
   credentials: true,
   optionSuccessStatus: 200,
 }
@@ -20,7 +21,6 @@ app.use(cors(corsOptions))
 
 app.use(express.json())
 app.use(cookieParser())
-
 
 // send email
 const sendEmail = (emailAddress, emailData) => {
@@ -92,6 +92,43 @@ async function run() {
     const roomsCollection = db.collection('rooms')
     const usersCollection = db.collection('users')
     const bookingsCollection = db.collection('bookings')
+    const categoriesCollection = db.collection('categories')
+    const reviewsCollection = db.collection('reviews')
+
+    await roomsCollection.createIndex({ avgRating: -1, reviewCount: -1 })
+    await reviewsCollection.createIndex(
+      { roomId: 1, 'reviewer.email': 1 },
+      { unique: true }   // prevents duplicate reviews at DB level
+    )
+
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+
+    // Helper function to check date overlap
+    const checkDateOverlap = (start1, end1, start2, end2) => {
+      return start1 <= end2 && start2 <= end1
+    }
+
+    // Helper function to get all booked dates for a room
+    const getBookedDatesForRoom = async (roomId) => {
+      const bookings = await bookingsCollection
+        .find({
+          roomId: roomId,
+          // Optional: only include confirmed/paid bookings
+          // status: { $in: ['confirmed', 'paid'] }
+        })
+        .toArray()
+
+      return bookings.map(booking => ({
+        startDate: new Date(booking.startDate),
+        endDate: new Date(booking.endDate)
+      }))
+    }
+
+    // ============================================
+    // MIDDLEWARE
+    // ============================================
 
     // verify admin middleware
     const verifyAdmin = async (req, res, next) => {
@@ -118,6 +155,10 @@ async function run() {
       next()
     }
 
+    // ============================================
+    // AUTH RELATED API
+    // ============================================
+
     // auth related api
     app.post('/jwt', async (req, res) => {
       const user = req.body
@@ -132,6 +173,7 @@ async function run() {
         })
         .send({ success: true })
     })
+
     // Logout
     app.get('/logout', async (req, res) => {
       try {
@@ -147,6 +189,10 @@ async function run() {
         res.status(500).send(err)
       }
     })
+
+    // ============================================
+    // PAYMENT RELATED API
+    // ============================================
 
     // create-payment-intent
     app.post('/create-payment-intent', verifyToken, async (req, res) => {
@@ -165,6 +211,10 @@ async function run() {
       // send client secret as response
       res.send({ clientSecret: client_secret })
     })
+
+    // ============================================
+    // USER RELATED API
+    // ============================================
 
     // save a user data in db
     app.put('/user', async (req, res) => {
@@ -210,8 +260,6 @@ async function run() {
       res.send(result)
     })
 
-
-
     // get all users data from db
     app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray()
@@ -230,6 +278,92 @@ async function run() {
       res.send(result)
     })
 
+    // ============================================
+    // CATEGORY RELATED API
+    // ============================================
+
+    // Get all categories (public)
+    app.get('/categories', async (req, res) => {
+      const result = await categoriesCollection.find().toArray()
+      res.send(result)
+    })
+
+    // Add a category (admin only)
+    app.post('/category', verifyToken, verifyAdmin, async (req, res) => {
+      const category = req.body
+      // Check duplicate
+      const exists = await categoriesCollection.findOne({ label: category.label })
+      if (exists) {
+        return res.status(400).send({ message: 'Category already exists' })
+      }
+      const result = await categoriesCollection.insertOne(category)
+      res.send(result)
+    })
+
+    // Delete a category (admin only)
+    app.delete('/category/:id', verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const result = await categoriesCollection.deleteOne(query)
+      res.send(result)
+    })
+
+    // ============================================
+    // REVIEW RELATED API
+    // ============================================
+
+    // POST review + update room avgRating
+    app.post('/review', verifyToken, async (req, res) => {
+      const { roomId, rating, comment, reviewer } = req.body
+
+      // one review per guest per room
+      const existing = await reviewsCollection.findOne({
+        roomId,
+        'reviewer.email': reviewer.email,
+      })
+      if (existing) {
+        return res.status(400).send({ message: 'Already reviewed' })
+      }
+
+      const review = { roomId, rating: Number(rating), comment, reviewer, createdAt: new Date() }
+      await reviewsCollection.insertOne(review)
+
+      // recalculate avgRating on the room
+      const allReviews = await reviewsCollection.find({ roomId }).toArray()
+      const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length
+
+      await roomsCollection.updateOne(
+        { _id: new ObjectId(roomId) },
+        { $set: { avgRating: parseFloat(avgRating.toFixed(2)), reviewCount: allReviews.length } }
+      )
+
+      res.send({ success: true })
+    })
+
+    // PATCH mark booking as reviewed
+    app.patch('/booking/reviewed/:id', verifyToken, async (req, res) => {
+      const { id } = req.params
+      const result = await bookingsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { reviewed: true } }
+      )
+      res.send(result)
+    })
+
+    // GET popular rooms — min 3 reviews, sorted by avgRating
+    app.get('/popular-rooms', async (req, res) => {
+      const result = await roomsCollection
+        .find({ reviewCount: { $gte: 1 } })      // lower to 1 during dev, raise to 3 in prod
+        .sort({ avgRating: -1, reviewCount: -1 })
+        .limit(8)
+        .toArray()
+      res.send(result)
+    })
+
+    // ============================================
+    // ROOM RELATED API
+    // ============================================
+
     // Get all rooms
     app.get('/rooms', async (req, res) => {
       const category = req.query.category
@@ -243,7 +377,17 @@ async function run() {
     // Save a room data in db
     app.post('/room', verifyToken, verifyHost, async (req, res) => {
       const roomData = req.body
-      const result = await roomsCollection.insertOne(roomData)
+
+      // Ensure images is an array and set default values for new fields
+      const room = {
+        ...roomData,
+        images: roomData.images || (roomData.image ? [roomData.image] : []),
+        avgRating: 0,
+        reviewCount: 0,
+        createdAt: new Date(),
+      }
+
+      const result = await roomsCollection.insertOne(room)
       res.send(result)
     })
 
@@ -256,14 +400,6 @@ async function run() {
       res.send(result)
     })
 
-    // delete a room
-    app.delete('/room/:id', verifyToken, verifyHost, async (req, res) => {
-      const id = req.params.id
-      const query = { _id: new ObjectId(id) }
-      const result = await roomsCollection.deleteOne(query)
-      res.send(result)
-    })
-
     // Get a single room data from db using _id
     app.get('/room/:id', async (req, res) => {
       const id = req.params.id
@@ -272,23 +408,51 @@ async function run() {
       res.send(result)
     })
 
-    // Save a booking data in db
-    app.post('/booking', verifyToken, async (req, res) => {
-      const bookingData = req.body
-      // save room booking info
-      const result = await bookingsCollection.insertOne(bookingData)
-      // send email to guest
-      sendEmail(bookingData?.guest?.email, {
-        subject: 'Booking Successful!',
-        message: `You've successfully booked a room through StayVista. Transaction Id: ${bookingData.transactionId}`,
-      })
-      // send email to host
-      sendEmail(bookingData?.host?.email, {
-        subject: 'Your room got booked!',
-        message: `Get ready to welcome ${bookingData.guest.name}.`,
+    // Get booked dates for a specific room
+    app.get('/room/:id/booked-dates', async (req, res) => {
+      const id = req.params.id
+
+      try {
+        const bookedDates = await getBookedDatesForRoom(id)
+        res.send(bookedDates)
+      } catch (error) {
+        res.status(500).send({ message: 'Error fetching booked dates' })
+      }
+    })
+
+    // Get room availability status
+    app.get('/room/:id/availability', async (req, res) => {
+      const id = req.params.id
+      const room = await roomsCollection.findOne({ _id: new ObjectId(id) })
+
+      if (!room) {
+        return res.status(404).send({ message: 'Room not found' })
+      }
+
+      const bookedDates = await getBookedDatesForRoom(id)
+      const roomStart = new Date(room.from)
+      const roomEnd = new Date(room.to)
+
+      // Calculate total days in room's range
+      const totalDays = differenceInCalendarDays(roomEnd, roomStart)
+
+      // Calculate booked days
+      let bookedDaysCount = 0
+      bookedDates.forEach(booking => {
+        bookedDaysCount += differenceInCalendarDays(
+          new Date(booking.endDate),
+          new Date(booking.startDate)
+        )
       })
 
-      res.send(result)
+      const isFullyBooked = bookedDaysCount >= totalDays
+
+      res.send({
+        isFullyBooked,
+        availableDays: totalDays - bookedDaysCount,
+        totalDays,
+        bookedDays: bookedDaysCount
+      })
     })
 
     // update room data
@@ -296,23 +460,96 @@ async function run() {
       const id = req.params.id
       const roomData = req.body
       const query = { _id: new ObjectId(id) }
+
+      // Ensure images is properly formatted
+      const updateData = {
+        ...roomData,
+        images: roomData.images || (roomData.image ? [roomData.image] : []),
+        updatedAt: new Date(),
+      }
+
       const updateDoc = {
-        $set: roomData,
+        $set: updateData,
       }
       const result = await roomsCollection.updateOne(query, updateDoc)
       res.send(result)
     })
 
-    // update Room Status
-    app.patch('/room/status/:id', async (req, res) => {
+    // delete a room
+    app.delete('/room/:id', verifyToken, verifyHost, async (req, res) => {
       const id = req.params.id
-      const status = req.body.status
-      // change room availability status
       const query = { _id: new ObjectId(id) }
-      const updateDoc = {
-        $set: { booked: status },
+      const result = await roomsCollection.deleteOne(query)
+      res.send(result)
+    })
+
+    // NOTE: Room status endpoint removed - rooms can now have partial bookings
+    // Instead of marking entire room as booked, use /room/:id/availability endpoint
+
+    // ============================================
+    // BOOKING RELATED API
+    // ============================================
+
+    // Save a booking data in db
+    app.post('/booking', verifyToken, async (req, res) => {
+      const bookingData = req.body
+
+      // Validate that the selected dates are within room availability
+      const room = await roomsCollection.findOne({ _id: new ObjectId(bookingData.roomId) })
+
+      if (!room) {
+        return res.status(404).send({ message: 'Room not found' })
       }
-      const result = await roomsCollection.updateOne(query, updateDoc)
+
+      const requestedStart = new Date(bookingData.startDate)
+      const requestedEnd = new Date(bookingData.endDate)
+      const roomStart = new Date(room.from)
+      const roomEnd = new Date(room.to)
+
+      // Check if requested dates are within room's availability range
+      if (requestedStart < roomStart || requestedEnd > roomEnd) {
+        return res.status(400).send({
+          message: 'Selected dates are outside the available range'
+        })
+      }
+
+      // Check for overlapping bookings
+      const existingBookings = await getBookedDatesForRoom(bookingData.roomId)
+
+      const hasOverlap = existingBookings.some(booking =>
+        checkDateOverlap(requestedStart, requestedEnd, booking.startDate, booking.endDate)
+      )
+
+      if (hasOverlap) {
+        return res.status(400).send({
+          message: 'Selected dates are already booked'
+        })
+      }
+
+      // Add start and end dates to booking data
+      const completeBookingData = {
+        ...bookingData,
+        startDate: requestedStart,
+        endDate: requestedEnd,
+        roomId: bookingData.roomId,
+        createdAt: new Date()
+      }
+
+      // save room booking info
+      const result = await bookingsCollection.insertOne(completeBookingData)
+
+      // send email to guest
+      sendEmail(bookingData?.guest?.email, {
+        subject: 'Booking Successful!',
+        message: `You've successfully booked a room through StayVista from ${requestedStart.toLocaleDateString()} to ${requestedEnd.toLocaleDateString()}. Transaction Id: ${bookingData.transactionId}`,
+      })
+
+      // send email to host
+      sendEmail(bookingData?.host?.email, {
+        subject: 'Your room got booked!',
+        message: `Get ready to welcome ${bookingData.guest.name} from ${requestedStart.toLocaleDateString()} to ${requestedEnd.toLocaleDateString()}.`,
+      })
+
       res.send(result)
     })
 
@@ -325,17 +562,12 @@ async function run() {
     })
 
     // get all booking for a host
-    app.get(
-      '/manage-bookings/:email',
-      verifyToken,
-      verifyHost,
-      async (req, res) => {
-        const email = req.params.email
-        const query = { 'host.email': email }
-        const result = await bookingsCollection.find(query).toArray()
-        res.send(result)
-      }
-    )
+    app.get('/manage-bookings/:email', verifyToken, verifyHost, async (req, res) => {
+      const email = req.params.email
+      const query = { 'host.email': email }
+      const result = await bookingsCollection.find(query).toArray()
+      res.send(result)
+    })
 
     // delete a booking
     app.delete('/booking/:id', verifyToken, async (req, res) => {
@@ -344,6 +576,10 @@ async function run() {
       const result = await bookingsCollection.deleteOne(query)
       res.send(result)
     })
+
+    // ============================================
+    // STATISTICS RELATED API
+    // ============================================
 
     // Admin Statistics
     app.get('/admin-stat', verifyToken, verifyAdmin, async (req, res) => {
@@ -365,13 +601,7 @@ async function run() {
         (sum, booking) => sum + booking.price,
         0
       )
-      // const data = [
-      //   ['Day', 'Sales'],
-      //   ['9/5', 1000],
-      //   ['10/2', 1170],
-      //   ['11/1', 660],
-      //   ['12/11', 1030],
-      // ]
+
       const chartData = bookingDetails.map(booking => {
         const day = new Date(booking.date).getDate()
         const month = new Date(booking.date).getMonth() + 1
@@ -379,11 +609,7 @@ async function run() {
         return data
       })
       chartData.unshift(['Day', 'Sales'])
-      // chartData.splice(0, 0, ['Day', 'Sales'])
 
-      // console.log(chartData)
-
-      // console.log(bookingDetails)
       res.send({
         totalUsers,
         totalRooms,
@@ -427,11 +653,7 @@ async function run() {
         return data
       })
       chartData.unshift(['Day', 'Sales'])
-      // chartData.splice(0, 0, ['Day', 'Sales'])
 
-      // console.log(chartData)
-
-      // console.log(bookingDetails)
       res.send({
         totalRooms,
         totalBookings: bookingDetails.length,
@@ -472,11 +694,7 @@ async function run() {
         return data
       })
       chartData.unshift(['Day', 'Sales'])
-      // chartData.splice(0, 0, ['Day', 'Sales'])
 
-      // console.log(chartData)
-
-      // console.log(bookingDetails)
       res.send({
         totalBookings: bookingDetails.length,
         totalPrice,
@@ -486,10 +704,10 @@ async function run() {
     })
 
     // Send a ping to confirm a successful connection
-    await client.db('admin').command({ ping: 1 })
-    console.log(
-      'Pinged your deployment. You successfully connected to MongoDB!'
-    )
+    // await client.db('admin').command({ ping: 1 })
+    // console.log(
+    //   'Pinged your deployment. You successfully connected to MongoDB!'
+    // )
   } finally {
     // Ensures that the client will close when you finish/error
   }
@@ -501,5 +719,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-  (`StayVista is running on port ${port}`)
+  console.log(`StayVista is running on port ${port}`)
 })

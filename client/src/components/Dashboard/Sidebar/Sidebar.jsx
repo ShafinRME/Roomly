@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState } from 'react'
 import { GrLogout } from 'react-icons/gr'
 import { FcSettings } from 'react-icons/fc'
@@ -15,6 +16,7 @@ import HostMenu from './Menu/HostMenu'
 import AdminMenu from './Menu/AdminMenu'
 import GuestMenu from './Menu/GuestMenu'
 import ToggleBtn from '../../Shared/Button/ToggleBtn'
+import logoImg from '../../../assets/images/logo.png'
 
 const Sidebar = () => {
     const { logOut } = useAuth()
@@ -39,7 +41,7 @@ const Sidebar = () => {
                         <Link to='/'>
                             <img
                                 // className='hidden md:block'
-                                src='https://i.ibb.co/4ZXzmq5/logo.png'
+                                src={logoImg}
                                 alt='logo'
                                 width='100'
                                 height='100'
@@ -67,7 +69,7 @@ const Sidebar = () => {
                             <Link to='/'>
                                 <img
                                     // className='hidden md:block'
-                                    src='https://i.ibb.co/4ZXzmq5/logo.png'
+                                    src={logoImg}
                                     alt='logo'
                                     width='100'
                                     height='100'

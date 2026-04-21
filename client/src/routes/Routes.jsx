@@ -16,6 +16,7 @@ import AdminRoute from './AdminRoute'
 import HostRoute from './HostRoute'
 import MyBookings from '../pages/Dashboard/Guest/MyBookings'
 import ManageBookings from '../pages/Dashboard/Host/ManageBookings'
+import ManageCategories from '../pages/Dashboard/Admin/ManageCategories'
 
 export const router = createBrowserRouter([
   {
@@ -108,6 +109,16 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <Profile />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: 'manage-categories',
+        element: (
+          <PrivateRoute>
+            <AdminRoute>
+              <ManageCategories />
+            </AdminRoute>
           </PrivateRoute>
         ),
       },

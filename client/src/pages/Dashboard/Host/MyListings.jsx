@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { Helmet } from 'react-helmet-async'
 import useAxiosSecure from '../../../hooks/useAxiosSecure'
 import { useMutation, useQuery } from '@tanstack/react-query'

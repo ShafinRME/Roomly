@@ -2,6 +2,10 @@ import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
 
 const Card = ({ room }) => {
+  // Get the first image from images array, fallback to single image field for backward compatibility
+  const displayImage = room?.images?.[0] || room?.image || '/placeholder.jpg'
+  const imageCount = room?.images?.length || 0
+
   return (
     <Link to={`/room/${room?._id}`} className='col-span-1 cursor-pointer group'>
       <div className='flex flex-col gap-2 w-full'>
@@ -22,9 +26,17 @@ const Card = ({ room }) => {
                 group-hover:scale-110 
                 transition
               '
-            src={room?.image}
-            alt='Room'
+            src={displayImage}
+            alt={room?.title || 'Room'}
           />
+
+          {/* Image count badge - only show if multiple images */}
+          {imageCount > 1 && (
+            <div className='absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-semibold shadow-md'>
+              1/{imageCount}
+            </div>
+          )}
+
           <div
             className='
               absolute

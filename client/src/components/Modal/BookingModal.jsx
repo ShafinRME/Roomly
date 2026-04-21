@@ -62,10 +62,12 @@ const BookingModal = ({ closeModal, isOpen, bookingInfo, refetch }) => {
                                         Guest: {bookingInfo.guest.name}
                                     </p>
                                 </div>
+
+                                {/* Updated to show selected dates instead of room's full availability */}
                                 <div className='mt-2'>
                                     <p className='text-sm text-gray-500'>
-                                        From: {format(new Date(bookingInfo.from), 'PP')} - To:{' '}
-                                        {format(new Date(bookingInfo.to), 'PP')}
+                                        From: {format(new Date(bookingInfo.startDate), 'PP')} - To:{' '}
+                                        {format(new Date(bookingInfo.endDate), 'PP')}
                                     </p>
                                 </div>
 

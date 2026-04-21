@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import PropTypes from 'prop-types'
 import { format } from 'date-fns'
 import { useState } from 'react'
@@ -9,10 +10,15 @@ import {
 } from '@headlessui/react'
 import DeleteModal from '../../Modal/DeleteModal'
 import UpdateRoomModal from '../../Modal/UpdateRoomModal'
+
 const RoomDataRow = ({ room, handleDelete, refetch }) => {
     // for delete modal
     const [isOpen, setIsOpen] = useState(false)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+    // Get the first image from images array, fallback to single image for backward compatibility
+    const displayImage = room?.images?.[0] || room?.image || '/placeholder.jpg'
+
     const closeModal = () => {
         setIsOpen(false)
     }
@@ -26,7 +32,7 @@ const RoomDataRow = ({ room, handleDelete, refetch }) => {
                         <div className='block relative'>
                             <img
                                 alt='profile'
-                                src={room?.image}
+                                src={displayImage}
                                 className='mx-auto object-cover rounded h-10 w-15 '
                             />
                         </div>
