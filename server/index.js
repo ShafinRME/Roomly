@@ -367,11 +367,18 @@ async function run() {
     // Get all rooms
     app.get('/rooms', async (req, res) => {
       const category = req.query.category
-      // console.log(category)
+      const page = parseInt(req.query.page) || 1
+      const limit = parseInt(req.query.limit) || 9
+
       let query = {}
       if (category && category !== 'null') query = { category }
-      const result = await roomsCollection.find(query).toArray()
-      res.send(result)
+
+      const skip = (page - 1) * limit
+      const total = await roomsCollection.countDocuments(query)
+
+      const result = await roomsCollection.find(query).skip(skip).limit(limit).toArray()
+
+      res.send({ rooms: result, total, page, totalPages: Math.ceil(total / limit) })
     })
 
     // Save a room data in db
@@ -531,6 +538,8 @@ async function run() {
         ...bookingData,
         startDate: requestedStart,
         endDate: requestedEnd,
+        from: requestedStart,
+        to: requestedEnd,
         roomId: bookingData.roomId,
         createdAt: new Date()
       }

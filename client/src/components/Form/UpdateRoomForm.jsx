@@ -1,13 +1,18 @@
 /* eslint-disable react/prop-types */
-import { categories } from '../Categories/CategoriesData'
+// REMOVE THIS LINE:
+// import { categories } from '../Categories/CategoriesData'
 import { DateRange } from 'react-date-range'
+
 const UpdateRoomForm = ({
     handleSubmit,
-    handleImage,
+    handleImages,
     setRoomData,
     roomData,
     handleDates,
     dates,
+    categories = [], // Add categories prop with default empty array
+    imagePreviews,
+    removeImage,
 }) => {
     return (
         <div className='w-full min-h-[calc(100vh-40px)] flex flex-col justify-center items-center text-gray-800 rounded-xl bg-gray-50'>
@@ -61,11 +66,15 @@ const UpdateRoomForm = ({
                             className='w-full px-4 py-3 border-rose-300 focus:outline-rose-500 rounded-md'
                             name='category'
                         >
-                            {categories.map(category => (
-                                <option value={category.label} key={category.label}>
-                                    {category.label}
-                                </option>
-                            ))}
+                            {categories.length > 0 ? (
+                                categories.map(category => (
+                                    <option value={category.label} key={category._id}>
+                                        {category.label}
+                                    </option>
+                                ))
+                            ) : (
+                                <option>Loading categories...</option>
+                            )}
                         </select>
                     </div>
 
@@ -93,18 +102,42 @@ const UpdateRoomForm = ({
                                         className='text-sm cursor-pointer w-36 hidden'
                                         type='file'
                                         name='image'
-                                        onChange={e => handleImage(e.target.files[0])}
+                                        onChange={e => handleImages(e)}
                                         id='image'
                                         accept='image/*'
+                                        multiple
                                         hidden
                                     />
                                     <div className='bg-rose-500 text-white border border-gray-300 rounded font-semibold cursor-pointer p-1 px-3 hover:bg-rose-500'>
-                                        Upload Image
+                                        Upload Images
                                     </div>
                                 </label>
                             </div>
                         </div>
+
+                        {/* Image Previews */}
+                        {imagePreviews && imagePreviews.length > 0 && (
+                            <div className='grid grid-cols-3 gap-2 mt-4'>
+                                {imagePreviews.map((preview, index) => (
+                                    <div key={index} className='relative'>
+                                        <img
+                                            src={preview}
+                                            alt={`Preview ${index + 1}`}
+                                            className='w-full h-20 object-cover rounded'
+                                        />
+                                        <button
+                                            type='button'
+                                            onClick={() => removeImage(index)}
+                                            className='absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600'
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
+
                     <div className='flex justify-between gap-2'>
                         <div className='space-y-1 text-sm'>
                             <label htmlFor='price' className='block text-gray-600'>

@@ -55,10 +55,12 @@ const RoomDetails = () => {
               {/* Image Gallery */}
               {images.length > 0 && (
                 <div className='relative'>
+
                   {/* Desktop Grid Layout */}
                   <div className='hidden md:grid md:grid-cols-4 md:gap-2 rounded-xl overflow-hidden h-[60vh]'>
-                    {/* Main/Cover Image - Takes 2 columns and full height */}
-                    <div className='col-span-2 row-span-2 h-full'>
+
+                    {/* Main/Cover Image */}
+                    <div className={`${images.length === 1 ? 'col-span-4' : 'col-span-2'} h-full`}>
                       <img
                         className='object-cover w-full h-full cursor-pointer hover:brightness-95 transition'
                         src={images[0]}
@@ -67,38 +69,54 @@ const RoomDetails = () => {
                       />
                     </div>
 
-                    {/* Right side images - 4 smaller images in 2x2 grid */}
-                    {images.slice(1, 5).map((image, index) => (
-                      <div key={index} className='h-[calc(30vh-4px)]'>
+                    {/* Right side — dynamic layout based on image count */}
+                    {images.length === 2 && (
+                      <div className='col-span-2 h-full'>
                         <img
                           className='object-cover w-full h-full cursor-pointer hover:brightness-95 transition'
-                          src={image}
-                          alt={`Room image ${index + 2}`}
+                          src={images[1]}
+                          alt='Room image 2'
                           onClick={() => setShowAllPhotos(true)}
                         />
                       </div>
-                    ))}
+                    )}
 
-                    {/* Show all photos button - only if more than 5 images */}
+                    {images.length === 3 && (
+                      <div className='col-span-2 grid grid-rows-2 gap-2 h-full'>
+                        {images.slice(1, 3).map((image, index) => (
+                          <div key={index} className='h-full overflow-hidden'>
+                            <img
+                              className='object-cover w-full h-full cursor-pointer hover:brightness-95 transition'
+                              src={image}
+                              alt={`Room image ${index + 2}`}
+                              onClick={() => setShowAllPhotos(true)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {images.length >= 4 && (
+                      <div className='col-span-2 grid grid-cols-2 grid-rows-2 gap-2 h-full'>
+                        {images.slice(1, 5).map((image, index) => (
+                          <div key={index} className='overflow-hidden'>
+                            <img
+                              className='object-cover w-full h-full cursor-pointer hover:brightness-95 transition'
+                              src={image}
+                              alt={`Room image ${index + 2}`}
+                              onClick={() => setShowAllPhotos(true)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Show all photos button */}
                     {images.length > 5 && (
                       <button
                         onClick={() => setShowAllPhotos(true)}
                         className='absolute bottom-4 right-4 bg-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition flex items-center gap-2 font-semibold text-sm'
                       >
-                        <svg
-                          xmlns='http://www.w3.org/2000/svg'
-                          fill='none'
-                          viewBox='0 0 24 24'
-                          strokeWidth={1.5}
-                          stroke='currentColor'
-                          className='w-4 h-4'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            d='M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z'
-                          />
-                        </svg>
                         Show all photos
                       </button>
                     )}

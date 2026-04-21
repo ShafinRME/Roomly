@@ -48,14 +48,8 @@ const Navbar = () => {
         <Container>
           <div className='flex flex-row  items-center justify-between gap-3 md:gap-0'>
             {/* Logo */}
-            <Link to='/'>
-              <img
-                // className='hidden md:block'
-                src={logoImg}
-                alt='logo'
-                width='100'
-                height='100'
-              />
+            <Link to='/' className='outline-none focus:outline-none'>
+              <img src={logoImg} alt='logo' width='100' height='100' />
             </Link>
             {/* <SearchBar /> */}
             {/* Dropdown Menu */}

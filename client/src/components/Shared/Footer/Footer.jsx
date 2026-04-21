@@ -194,7 +194,7 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-            
+
             {/* Contact Info */}
             <div className='space-y-2 text-sm text-gray-600'>
               <div className='flex items-center gap-2 hover:text-rose-500 transition duration-200'>
@@ -232,7 +232,7 @@ const Footer = () => {
       </div>
 
       {/* Decorative gradient overlay */}
-      <div className='absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-400 via-pink-400 to-rose-500 opacity-50'></div>
+      {/* <div className='absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-400 via-pink-400 to-rose-500 opacity-50'></div> */}
     </footer>
   )
 }

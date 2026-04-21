@@ -11,11 +11,13 @@ import {
 import { Fragment, useState } from 'react'
 import UpdateRoomForm from '../Form/UpdateRoomForm'
 import useAxiosSecure from '../../hooks/useAxiosSecure'
+import useCategories from '../../hooks/useCategories' // Add this import
 import { uploadMultipleImagesToCloudinary } from '../../api/utils'
 import toast from 'react-hot-toast'
 
 const UpdateRoomModal = ({ setIsEditModalOpen, isOpen, room, refetch }) => {
     const axiosSecure = useAxiosSecure()
+    const [categories, isLoading] = useCategories()
     const [loading, setLoading] = useState(false)
     const [roomData, setRoomData] = useState(room)
     const [selectedImages, setSelectedImages] = useState([])
@@ -148,6 +150,7 @@ const UpdateRoomModal = ({ setIsEditModalOpen, isOpen, room, refetch }) => {
                                         imagePreviews={imagePreviews}
                                         removeImage={removeImage}
                                         setRoomData={setRoomData}
+                                        categories={categories} // Pass categories here
                                     />
                                 </div>
                                 <hr className='mt-8 ' />

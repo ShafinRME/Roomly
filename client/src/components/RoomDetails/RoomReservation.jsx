@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import Button from '../Shared/Button/Button'
 import { useState } from 'react'
 import { DateRange } from 'react-date-range'
-import { differenceInCalendarDays, eachDayOfInterval } from 'date-fns'
+import { differenceInCalendarDays, eachDayOfInterval, addDays } from 'date-fns'
 import BookingModal from '../Modal/BookingModal'
 import useAuth from '../../hooks/useAuth'
 
@@ -10,11 +10,14 @@ const RoomReservation = ({ room, refetch, bookedDates = [] }) => {
   const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
 
-  // Initialize with room's available range
+  // ✅ FIXED: Initialize with a sensible default range (1 night)
+  const roomStartDate = new Date(room.from)
+  const defaultEndDate = addDays(roomStartDate, 1)
+
   const [state, setState] = useState([
     {
-      startDate: new Date(room.from),
-      endDate: new Date(room.to),
+      startDate: roomStartDate,
+      endDate: defaultEndDate,
       key: 'selection',
     },
   ])
