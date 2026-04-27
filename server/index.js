@@ -13,7 +13,7 @@ const port = process.env.PORT || 8000
 
 // middleware
 const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://stay-vista-c059e.web.app'],
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'https://with-roomly.web.app'],
   credentials: true,
   optionSuccessStatus: 200,
 }
@@ -45,7 +45,7 @@ const sendEmail = (emailAddress, emailData) => {
     }
   })
   const mailBody = {
-    from: `"StayVista" <${process.env.TRANSPORTER_EMAIL}>`, // sender address
+    from: `"Roomly" <${process.env.TRANSPORTER_EMAIL}>`, // sender address
     to: emailAddress, // list of receivers
     subject: emailData.subject, // Subject line
     html: emailData.message, // html body
@@ -724,9 +724,9 @@ async function run() {
 run().catch(console.dir)
 
 app.get('/', (req, res) => {
-  res.send('Hello from StayVista Server..')
+  res.send('Hello from Roomly Server..')
 })
 
 app.listen(port, () => {
-  console.log(`StayVista is running on port ${port}`)
+  console.log(`Roomly is running on port ${port}`)
 })
