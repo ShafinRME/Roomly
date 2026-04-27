@@ -126,7 +126,7 @@ const Footer = () => {
           {/* Links Sections */}
           <div>
             <h4 className='font-semibold text-gray-900 mb-4 text-sm uppercase tracking-wider'>
-              Company
+              Roomly
             </h4>
             <ul className='space-y-2'>
               {footerLinks.company.map((link) => (
@@ -199,7 +199,7 @@ const Footer = () => {
             <div className='space-y-2 text-sm text-gray-600'>
               <div className='flex items-center gap-2 hover:text-rose-500 transition duration-200'>
                 <MdEmail className='flex-shrink-0' />
-                <a href='mailto:support@example.com'>support@example.com</a>
+                <a href='mailto:support@example.com'>roomly@gmail.com</a>
               </div>
               <div className='flex items-center gap-2 hover:text-rose-500 transition duration-200'>
                 <MdPhone className='flex-shrink-0' />
@@ -217,7 +217,7 @@ const Footer = () => {
         <div className='pt-8 border-t border-gray-200'>
           <div className='flex flex-col md:flex-row justify-between items-center gap-4'>
             <p className='text-gray-600 text-sm'>
-              © {new Date().getFullYear()} Your Company. All rights reserved.
+              © {new Date().getFullYear()} Roomly. All rights reserved.
             </p>
             <div className='flex gap-6 text-sm text-gray-600'>
               <button className='hover:text-rose-500 transition duration-200 flex items-center gap-1'>

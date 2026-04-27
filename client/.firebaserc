@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "stay-vista-c059e"
-  }
+  },
+  "targets": {
+    "stay-vista-c059e": {
+      "hosting": {
+        "roomly": [
+          "with-roomly"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
