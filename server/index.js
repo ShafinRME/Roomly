@@ -267,7 +267,7 @@ async function run() {
     })
 
     //update a user role
-    app.patch('/users/update/:email', async (req, res) => {
+    app.patch('/users/update/:email', verifyToken, verifyAdmin, async (req, res) => {
       const email = req.params.email
       const user = req.body
       const query = { email }
