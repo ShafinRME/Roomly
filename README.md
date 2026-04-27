@@ -12,7 +12,7 @@ Roomly is a full-stack room booking platform that connects guests, hosts, and ad
 |---|---|
 | 🌐 **Live Site** | [with-roomly.web.app](https://with-roomly.web.app) |
 | ⚙️ **Live API** | [roomly-lac.vercel.app](https://roomly-lac.vercel.app) |
-| 💻 **Frontend Repo** | [github.com/ShafinRME/Room_Booking/client](https://github.com/ShafinRME/Room_Booking/tree/main/client) |
+| 💻 **Frontend Repo** | [github.com/ShafinRME/Room_Booking/client](https://github.com/ShafinRME/Roomly/tree/main/client) |
 | 🖥️ **Backend Repo** | [github.com/ShafinRME/Room_Booking/server](https://github.com/ShafinRME/Room_Booking/tree/main/server) |
 
 ---
