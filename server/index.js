@@ -247,7 +247,7 @@ async function run() {
       const result = await usersCollection.updateOne(query, updateDoc, options)
       // welcome new user
       sendEmail(user?.email, {
-        subject: 'Welcome to Stayvista!',
+        subject: 'Welcome to Roomly!',
         message: `Hope you will find your destination`,
       })
       res.send(result)
@@ -550,7 +550,7 @@ async function run() {
       // send email to guest
       sendEmail(bookingData?.guest?.email, {
         subject: 'Booking Successful!',
-        message: `You've successfully booked a room through StayVista from ${requestedStart.toLocaleDateString()} to ${requestedEnd.toLocaleDateString()}. Transaction Id: ${bookingData.transactionId}`,
+        message: `You've successfully booked a room through Roomly from ${requestedStart.toLocaleDateString()} to ${requestedEnd.toLocaleDateString()}. Transaction Id: ${bookingData.transactionId}`,
       })
 
       // send email to host
